@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Background styled with rounded corners fit for modern mobile home screens -->
+  <rect width="512" height="512" rx="128" fill="#2D336B" />
+  
+  <!-- Safe zone scalable container -->
+  <g transform="translate(256, 260) scale(1.05)">
+    <!-- Calendar Grid background plate -->
+    <rect x="-120" y="-100" width="240" height="220" rx="32" fill="#F8F7F4" stroke="#E1FF72" stroke-width="10" />
+    
+    <!-- Calendar Header (deep blue background inside the plate) -->
+    <path d="M-120 -68 c0-17.6 14.4-32 32-32 h176 c17.6 0 32 14.4 32 32 v30 h-240 z" fill="#2D336B" />
+    
+    <!-- Binder Rings -->
+    <rect x="-80" y="-120" width="16" height="32" rx="8" fill="#E1FF72" />
+    <rect x="-8" y="-120" width="16" height="32" rx="8" fill="#E1FF72" />
+    <rect x="64" y="-120" width="16" height="32" rx="8" fill="#E1FF72" />
+    
+    <!-- Grid dots for calendar days -->
+    <g fill="#2D336B" opacity="0.25">
+      <circle cx="-75" cy="5" r="8" />
+      <circle cx="-35" cy="5" r="8" />
+      <circle cx="5" cy="5" r="8" />
+      
+      <circle cx="-75" cy="45" r="8" />
+      <circle cx="-35" cy="45" r="8" />
+      <circle cx="5" cy="45" r="8" />
+      
+      <circle cx="-75" cy="85" r="8" />
+      <circle cx="-35" cy="85" r="8" />
+    </g>
+    
+    <!-- Beautiful tropical palm tree on the right side symbolizing vacation/leave -->
+    <!-- Trunk -->
+    <path d="M70 100 Q 55 5 25 -20" stroke="#2D336B" stroke-width="12" stroke-linecap="round" fill="none" />
+    
+    <!-- Leaves (Electric Lime Green) -->
+    <g fill="#E1FF72" stroke="#2D336B" stroke-width="4" stroke-linejoin="round">
+      <!-- Leaf 1 (Left-up) -->
+      <path d="M25 -20 C -5 -30 -25 -10 -25 -10 C -10 5 10 -5 25 -20 Z" />
+      <!-- Leaf 2 (Right-up) -->
+      <path d="M25 -20 C 55 -40 75 -20 75 -20 C 55 -10 35 -15 25 -20 Z" />
+      <!-- Leaf 3 (Left-down) -->
+      <path d="M25 -20 C 5 -10 -15 15 -15 15 C -5 25 15 5 25 -20 Z" />
+      <!-- Leaf 4 (Right-down) -->
+      <path d="M25 -20 C 55 5 65 30 65 30 C 45 30 35 15 25 -20 Z" />
+      <!-- Leaf 5 (Top center) -->
+      <path d="M25 -20 C 15 -55 35 -65 35 -65 C 45 -45 35 -30 25 -20 Z" />
+    </g>
+  </g>
+</svg>

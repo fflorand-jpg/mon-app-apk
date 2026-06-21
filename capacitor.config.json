@@ -1,0 +1,8 @@
+{
+  "appId": "com.conges.app",
+  "appName": "Gestion des congés",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
