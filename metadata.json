@@ -1,0 +1,6 @@
+{
+  "name": "Gestion de Congés",
+  "description": "Application mobile de gestion de congés (CP, RTP/RTT) avec calendrier, semaines paires/impaires et calcul des jours fériés.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

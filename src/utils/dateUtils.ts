@@ -1,189 +1,148 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { PublicHoliday } from '../types';
 
 /**
- * Calculates French public holidays for a given year.
- * Includes fixed date holidays and moveable Easter-based holidays.
+ * Returns the ISO 8601 week number for a given Date.
+ * Weeks start on Monday. Week 1 is the week with the first Thursday of the year.
  */
-export function getFrenchPublicHolidays(year: number): Record<string, string> {
-  const holidays: Record<string, string> = {
-    [`${year}-01-01`]: "Jour de l'An",
-    [`${year}-05-01`]: "Fête du Travail",
-    [`${year}-05-08`]: "Victoire 1945",
-    [`${year}-07-14`]: "Fête Nationale",
-    [`${year}-08-15`]: "Assomption",
-    [`${year}-11-01`]: "Toussaint",
-    [`${year}-11-11`]: "Armistice 1918",
-    [`${year}-12-25`]: "Noël",
-  };
-
-  // Easter and moveable holidays calculation (Meeus/Jones/Butcher algorithm)
-  const a = year % 19;
-  const b = Math.floor(year / 100);
-  const c = year % 100;
-  const d = Math.floor(b / 4);
-  const e = b % 4;
-  const f = Math.floor((b + 8) / 25);
-  const g = Math.floor((b - f + 1) / 3);
-  const h = (19 * a + b - d - g + 15) % 30;
-  const i = Math.floor(c / 4);
-  const k = c % 4;
-  const l = (32 + 2 * e + 2 * i - h - k) % 7;
-  const m = Math.floor((a + 11 * h + 22 * l) / 451);
-  const easterMonth = Math.floor((h + l - 7 * m + 114) / 31); // 3 = March, 4 = April
-  const easterDay = ((h + l - 7 * m + 114) % 31) + 1;
-
-  // Let's create proper Dates in UTC to avoid timezone issues
-  const easter = new Date(Date.UTC(year, easterMonth - 1, easterDay));
-
-  // Easter Monday (+1 day)
-  const easterMonday = new Date(easter.getTime() + 1 * 24 * 60 * 60 * 1000);
-  // Ascension Thursday (+39 days)
-  const ascension = new Date(easter.getTime() + 39 * 24 * 60 * 60 * 1000);
-  // Whit Monday / Lundi de Pentecôte (+50 days)
-  const pentecote = new Date(easter.getTime() + 50 * 24 * 60 * 60 * 1000);
-
-  const formatDate = (date: Date) => date.toISOString().split('T')[0];
-
-  holidays[formatDate(easterMonday)] = "Lundi de Pâques";
-  holidays[formatDate(ascension)] = "Jeudi de l'Ascension";
-  holidays[formatDate(pentecote)] = "Lundi de Pentecôte";
-
-  return holidays;
+export function getISOWeekNumber(date: Date): number {
+  const target = new Date(date.valueOf());
+  const dayNr = (date.getDay() + 6) % 7; // Monday = 0, Sunday = 6
+  target.setDate(target.getDate() - dayNr + 3); // Thursday in target week
+  const firstThursday = target.valueOf();
+  target.setMonth(0, 1);
+  if (target.getDay() !== 4) {
+    target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
+  }
+  return 1 + Math.round((firstThursday - target.valueOf()) / 604800000);
 }
 
 /**
- * Checks if a given date string (YYYY-MM-DD) is a weekend day (Saturday or Sunday)
+ * Checks if a week number is even (Paire) or odd (Impaire)
  */
-export function isWeekend(dateStr: string): boolean {
-  const parts = dateStr.split('-');
-  if (parts.length !== 3) return false;
-  const year = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10);
-  const day = parseInt(parts[2], 10);
-  const d = new Date(Date.UTC(year, month - 1, day));
-  const dayOfWeek = d.getUTCDay(); // 0 = Sunday, 6 = Saturday
-  return dayOfWeek === 0 || dayOfWeek === 6;
+export function isEvenWeek(weekNumber: number): boolean {
+  return weekNumber % 2 === 0;
 }
 
 /**
- * Checks if a given date string is a French public holiday
+ * Formats a date to YYYY-MM-DD
  */
-export function isPublicHoliday(dateStr: string): boolean {
-  const parts = dateStr.split('-');
-  if (parts.length !== 3) return false;
-  const year = parseInt(parts[0], 10);
-  const holidays = getFrenchPublicHolidays(year);
-  return dateStr in holidays;
+export function formatDateISO(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 /**
- * Computes list of calendar dates between startDate and endDate (inclusive)
+ * Parses YYYY-MM-DD to Date object at local midnight
  */
-export function getDatesInRange(startStr: string, endStr: string): string[] {
-  const dates: string[] = [];
-  const startParts = startStr.split('-');
-  const endParts = endStr.split('-');
-  
-  if (startParts.length !== 3 || endParts.length !== 3) return [];
+export function parseDateISO(dateStr: string): Date {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
 
-  const start = new Date(Date.UTC(
-    parseInt(startParts[0], 10),
-    parseInt(startParts[1], 10) - 1,
-    parseInt(startParts[2], 10)
-  ));
-  const end = new Date(Date.UTC(
-    parseInt(endParts[0], 10),
-    parseInt(endParts[1], 10) - 1,
-    parseInt(endParts[2], 10)
-  ));
-  
-  if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) {
-    return [];
+/**
+ * Returns long French month name with year e.g. "Août 2026"
+ */
+export function formatMonthYearFr(date: Date): string {
+  const str = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
+ * Returns formatted French date e.g. "Mardi 12 Août 2026"
+ */
+export function formatDateFullFr(date: Date): string {
+  const str = date.toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
+ * Returns short French date e.g. "Lun. 12 Aoû."
+ */
+export function formatDateShortFr(date: Date): string {
+  return date.toLocaleDateString('fr-FR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+}
+
+/**
+ * Generates dates for a month calendar view.
+ * Starts on Monday and pads full weeks.
+ */
+export function getCalendarGridDates(year: number, monthIndex: number): Date[] {
+  const firstOfMonth = new Date(year, monthIndex, 1);
+  const lastOfMonth = new Date(year, monthIndex + 1, 0);
+
+  // Day of week for 1st of month (0 = Sun, 1 = Mon, ..., 6 = Sat)
+  // Convert so Monday = 0, Sunday = 6
+  const startDay = (firstOfMonth.getDay() + 6) % 7;
+
+  const dates: Date[] = [];
+
+  // Previous month padding
+  for (let i = startDay; i > 0; i--) {
+    const prevDate = new Date(year, monthIndex, 1 - i);
+    dates.push(prevDate);
   }
 
-  const current = new Date(start);
-  while (current <= end) {
-    dates.push(current.toISOString().split('T')[0]);
-    current.setUTCDate(current.getUTCDate() + 1);
+  // Current month days
+  for (let i = 1; i <= lastOfMonth.getDate(); i++) {
+    dates.push(new Date(year, monthIndex, i));
   }
+
+  // Next month padding to fill out 7-column grid (up to 35 or 42 days)
+  const remaining = (7 - (dates.length % 7)) % 7;
+  for (let i = 1; i <= remaining; i++) {
+    dates.push(new Date(year, monthIndex + 1, i));
+  }
+
   return dates;
 }
 
 /**
- * Professional French working days calculator.
- * Excludes weekends and French public holidays, while correctly counting half-days.
- * 
- * Rules:
- * - Start period options:
- *   - MORNING: Absence starts in the morning (counts full first day if not weekend/holiday).
- *   - AFTERNOON: Absence starts in the afternoon (counts 0.5 for the first day).
- * - End period options:
- *   - FULL or AFTERNOON: Absence ends in the evening (counts full last day if not weekend/holiday).
- *   - MORNING: Absence ends after the morning (counts 0.5 for the last day).
+ * Calculates number of effective working days between two ISO date strings (inclusive),
+ * excluding weekends and optionally public holidays.
  */
-export function calculateWorkingDays(
-  startStr: string,
-  startPeriod: 'FULL' | 'MORNING' | 'AFTERNOON',
-  endStr: string,
-  endPeriod: 'FULL' | 'MORNING' | 'AFTERNOON'
+export function calculateWorkingDaysInRange(
+  startDateStr: string,
+  endDateStr: string,
+  duration: 'FULL' | 'MORNING' | 'AFTERNOON',
+  holidaysMap: Record<string, PublicHoliday>,
+  workDays: number[] = [1, 2, 3, 4, 5]
 ): number {
-  if (!startStr || !endStr) return 0;
-  if (startStr > endStr) return 0;
+  if (startDateStr > endDateStr) return 0;
 
-  const dates = getDatesInRange(startStr, endStr);
-  if (dates.length === 0) return 0;
+  const start = parseDateISO(startDateStr);
+  const end = parseDateISO(endDateStr);
 
-  // Filter out non-working days
-  const workingDays = dates.filter(d => !isWeekend(d) && !isPublicHoliday(d));
-  if (workingDays.length === 0) return 0;
+  let totalDays = 0;
+  const curr = new Date(start);
 
-  // Default count of pure working days
-  let totalDays = workingDays.length;
+  while (curr <= end) {
+    const currStr = formatDateISO(curr);
+    const dayOfWeek = curr.getDay(); // 0=Sun, 1=Mon...
 
-  const isStartWorkingDay = workingDays.includes(startStr);
-  const isEndWorkingDay = workingDays.includes(endStr);
+    const isWorkDay = workDays.includes(dayOfWeek);
+    const isHoliday = Boolean(holidaysMap[currStr]);
 
-  if (startStr === endStr) {
-    // Single day request
-    if (isStartWorkingDay) {
-      if (startPeriod === 'MORNING' && endPeriod === 'MORNING') return 0.5;
-      if (startPeriod === 'AFTERNOON' && endPeriod === 'AFTERNOON') return 0.5;
-      if (startPeriod === 'MORNING' && endPeriod === 'AFTERNOON') return 1.0;
-      if (startPeriod === 'AFTERNOON' && endPeriod === 'MORNING') return 0.5; // fallback
-      return startPeriod !== 'FULL' && endPeriod !== 'FULL' ? 0.5 : 1.0;
+    if (isWorkDay && !isHoliday) {
+      if (duration === 'FULL') {
+        totalDays += 1;
+      } else {
+        totalDays += 0.5;
+      }
     }
-    return 0;
+
+    curr.setDate(curr.getDate() + 1);
   }
 
-  // Multi-day request
-  // Adjust start day if it's a working day
-  if (isStartWorkingDay) {
-    if (startPeriod === 'AFTERNOON') {
-      totalDays -= 0.5; // Lost half day because we worked the morning
-    }
-  }
-
-  // Adjust end day if it's a working day
-  if (isEndWorkingDay) {
-    if (endPeriod === 'MORNING') {
-      totalDays -= 0.5; // Lost half day because we work the afternoon
-    }
-  }
-
-  return Math.max(0, totalDays);
-}
-
-/**
- * Returns a list of public holidays within a year as objects
- */
-export function getPublicHolidaysList(year: number): PublicHoliday[] {
-  const holidays = getFrenchPublicHolidays(year);
-  return Object.entries(holidays)
-    .map(([date, name]) => ({ date, name }))
-    .sort((a, b) => a.date.localeCompare(b.date));
+  return totalDays;
 }
